@@ -1,5 +1,6 @@
 package de.goeuro.devtest.mapper;
 
+import de.goeuro.devtest.exception.ApplicationException;
 import de.goeuro.devtest.model.Result;
 import de.goeuro.devtest.model.Results;
 import org.supercsv.io.CsvListWriter;
@@ -17,7 +18,7 @@ import java.util.List;
 public class CsvWriter {
     private final String[] HEADER = {"_type", "_id", "name", "type", "latitude", "longitude"};
 
-    public void writeCsv(Results input, Writer destination) throws IOException {
+    public void writeCsv(Results input, Writer destination) throws ApplicationException {
         if (input != null) {
             try (ICsvListWriter csvListWriter = new CsvListWriter(destination, CsvPreference.STANDARD_PREFERENCE)) {
                 csvListWriter.writeHeader(HEADER);
@@ -38,6 +39,9 @@ public class CsvWriter {
                 }
                 // no need to close the writer "destination";
                 // csvListWriter.close(), which is called automatically, does that
+            } catch (IOException e) {
+                throw new ApplicationException(ApplicationException.ErrorCode.INTERNAL_ERROR,
+                        "Error writing outout CSV: " + e.getMessage(), e);
             }
 
         }

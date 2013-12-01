@@ -1,5 +1,6 @@
 package de.goeuro.devtest.options;
 
+import de.goeuro.devtest.exception.ApplicationException;
 import org.apache.commons.cli.*;
 
 import java.io.*;
@@ -27,7 +28,7 @@ public class CommandLineOptionsParser {
                 " If omitted, standard output is used.");
     }
 
-    public Configuration parse(String... cmdArgs) throws ParseException, IOException {
+    public Configuration parse(String... cmdArgs) throws ParseException, IOException, ApplicationException {
         CommandLineParser cmdLineParser = new PosixParser();
         CommandLine cmdLine = cmdLineParser.parse(options, cmdArgs);
 
@@ -57,21 +58,22 @@ public class CommandLineOptionsParser {
         return new Configuration().withSearchParameter(searchParam).withServiceUrl(serviceUrl).withWriter(writer);
     }
 
-    private void validate(CommandLine cmdLine) throws UnsupportedEncodingException {
+    private void validate(CommandLine cmdLine) throws UnsupportedEncodingException, ApplicationException {
         if ((cmdLine.hasOption(OPTION_URL) && cmdLine.hasOption(OPTION_LOCALHOST))
                 || (cmdLine.getArgs() == null || cmdLine.getArgs().length == 0)) {
+
             HelpFormatter formatter = new HelpFormatter();
             formatter.setWidth(93);
             String exampleParam = "Frankfurt am Main";
-            String msg = String.format("java -jar GoEuroTest.jar {[-%s url]|[-%s]} [-%s filename] " +
-                    "search_parameter\nExample:\n" +
+            String msg = String.format("java -jar GoEuroTest.jar {[-%s url]|[-%s]} [-%s filename] search_parameter\n" +
+                    "Example:\n" +
                     "java -jar GoEuroTest.jar \"%s\"" +
                     "\nwill query:\n" +
                     "%s%s", OPTION_URL, OPTION_LOCALHOST, OPTION_FILENAME, exampleParam,
                     URL_REMOTE, URLEncoder.encode(exampleParam, "UTF-8"));
             formatter.printHelp(msg, options);
-            System.exit(1);
+            throw new ApplicationException(ApplicationException.ErrorCode.WRONG_CMD_ARGUMENTS_ERROR,
+                    "Invalid command line args", null);
         }
-
     }
 }
