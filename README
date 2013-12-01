@@ -1,3 +1,0 @@
-The server <set hostname> didn't respond at port 12345 <set curl output>, and at port 80 responded with 401 - Authorization required <set curl output>.
-
-I added a server which runs under Tomcat that returns mock data.
