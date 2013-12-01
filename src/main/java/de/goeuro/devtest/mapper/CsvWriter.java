@@ -13,14 +13,30 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Maps a list of POJOs as CSV.
+ *
  * @author Rolf Schuster
  */
 public class CsvWriter {
-    private final String[] HEADER = {"_type", "_id", "name", "type", "latitude", "longitude"};
+    private static final String[] HEADER = {"_type", "_id", "name", "type", "latitude", "longitude"};
 
+    // The line endings are platform dependent (LF for Linux, CRLF for Windows)
+    private static final String EOL_SEPARATOR = System.getProperty("line.separator");
+
+    /**
+     * Writer the objects contained in "input" to the "destination" writer as CSV.
+     *
+     * The line endings are platform dependent (LF for Linux, CRLF for Windows).
+     *
+     * @param input
+     * @param destination
+     * @throws ApplicationException
+     */
     public void writeCsv(Results input, Writer destination) throws ApplicationException {
         if (input != null) {
-            try (ICsvListWriter csvListWriter = new CsvListWriter(destination, CsvPreference.STANDARD_PREFERENCE)) {
+
+            CsvPreference csvPreference = new CsvPreference.Builder('"', ',', EOL_SEPARATOR).build();
+            try (ICsvListWriter csvListWriter = new CsvListWriter(destination, csvPreference)) {
                 csvListWriter.writeHeader(HEADER);
                 if (input.getResults() != null && !input.getResults().isEmpty()) {
                     for (Result result : input.getResults()) {

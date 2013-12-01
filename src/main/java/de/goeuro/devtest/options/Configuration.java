@@ -3,6 +3,8 @@ package de.goeuro.devtest.options;
 import java.io.Writer;
 
 /**
+ * Holds configuration for the main program.
+ *
  * @author Rolf Schuster
  */
 public class Configuration {

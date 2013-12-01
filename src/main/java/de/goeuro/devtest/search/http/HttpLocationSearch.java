@@ -16,6 +16,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 /**
+ * Queries an URL via GET and returns the reponse as String.
+ *
+ * "Accept: application/json" is used in the request.
+ *
  * @author Rolf Schuster
  */
 public class HttpLocationSearch {
@@ -23,6 +27,18 @@ public class HttpLocationSearch {
     // because we want to keep the project simple and the JAR small
     private CloseableHttpClient httpClient = HttpClients.createDefault();
 
+    /**
+     * Queries the URL of the form:
+     *      serviceUrl + "/" + searchParameter
+     * and returns the response as String
+     *
+     * @param serviceUrl the URL to be called
+     * @param searchParameter the search parameter to be appended to the URL as path
+     *
+     * @return tghe response as String
+     *
+     * @throws ApplicationException if there was an error accessing the query URL
+     */
     public String searchLocation(String serviceUrl, String searchParameter) throws ApplicationException {
         if (!serviceUrl.endsWith("/")) {
             // some might not consider it a good practice to modify method parameters, but it can be useful
@@ -64,5 +80,10 @@ public class HttpLocationSearch {
                 }
             }
         }
+    }
+
+    // visible for testing purposes
+    protected void setHttpClient(CloseableHttpClient httpClient) {
+        this.httpClient = httpClient;
     }
 }

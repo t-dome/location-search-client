@@ -45,19 +45,27 @@ public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String... args) {
-        CommandLineOptionsParser cmdParser = new CommandLineOptionsParser();
         try {
+            CommandLineOptionsParser cmdParser = new CommandLineOptionsParser();
+
             // parse the command line and get the configuration data, linek URL and search parameter
             Configuration cfg = cmdParser.parse(args);
 
             // query the URL
-            String result = new HttpLocationSearch().searchLocation(cfg.getServiceUrl(), cfg.getSearchParameter());
+            String jsonResult = new HttpLocationSearch().searchLocation(cfg.getServiceUrl(), cfg.getSearchParameter());
 
-            JsonMapper mapper = new JsonMapper();
-            Results searchResults = mapper.fromJson(result);
+            // map the JSON to POJOs
+            Results searchResults = new JsonMapper().fromJson(jsonResult);
 
-            CsvWriter csvWriter = new CsvWriter();
-            csvWriter.writeCsv(searchResults, cfg.getWriter());
+            if (searchResults == null || searchResults.getResults() == null || searchResults.getResults().isEmpty()) {
+                String msg = "Couldn't find any results. JSON:\n" + jsonResult;
+                LOGGER.info(msg);
+                System.err.println(msg);
+            } else {
+                // write the CSV
+                new CsvWriter().writeCsv(searchResults, cfg.getWriter());
+            }
+
         } catch (ApplicationException e) {
             switch(e.getCode()) {
                 case INTERNAL_ERROR:
@@ -78,18 +86,12 @@ public class Main {
                     }
                 case JSON_PARSING_ERROR:
                     { // create a new block so that "msg" can be declared again
-                        String msg = "Error parsing the receiven JSON string";
-                        LOGGER.error(msg + "\njson:\n" + e.getDetailMessage(), e.getCause());
+                        String msg = "Error parsing the received JSON string";
+                        LOGGER.error(msg + "\nJSON:\n" + e.getDetailMessage(), e.getCause());
                         System.err.println(generateErrorMessage(msg, e));
                         break;
                     }
             }
-        } catch (ParseException | IOException e) {
-            String msg = "Error parsing command line";
-            // log the stacktrace
-            LOGGER.error(msg, e);
-            // only display the error message on stderr
-            System.err.println(generateErrorMessage(msg, e));
         }
     }
 

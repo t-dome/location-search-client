@@ -15,4 +15,5 @@ curl http://pre.dev.goeuro.de:80/api/v1/suggest/position/en/name/Berlin
 </html>
 
 
-I added a server (https://github.com/t-dome/location-search-server.git) which runs under Tomcat and returns mock data.
+So I added a server in a separate project (https://github.com/t-dome/location-search-server.git)
+which runs under Tomcat and returns mock data.

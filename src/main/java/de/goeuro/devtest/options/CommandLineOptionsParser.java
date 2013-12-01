@@ -7,6 +7,8 @@ import java.io.*;
 import java.net.URLEncoder;
 
 /**
+ * Parses the command line and returns an appropiately filled Configuration object.
+ *
  * @author Rolf Schuster
  */
 public class CommandLineOptionsParser {
@@ -19,6 +21,7 @@ public class CommandLineOptionsParser {
 
     private Options options;
 
+    // the sertup is done here
     public CommandLineOptionsParser() {
         options = new Options();
         options.addOption(OPTION_URL, true, "(Optional) Service URL to query at. If ommitted and neither -l has been specified, " +
@@ -28,36 +31,57 @@ public class CommandLineOptionsParser {
                 " If omitted, standard output is used.");
     }
 
-    public Configuration parse(String... cmdArgs) throws ParseException, IOException, ApplicationException {
-        CommandLineParser cmdLineParser = new PosixParser();
-        CommandLine cmdLine = cmdLineParser.parse(options, cmdArgs);
+    /**
+     * Parses the command line and populates a Configuration object with the correct service URL, writer
+     * and query parameter.
+     *
+     * @param cmdArgs the command line args passed to the main method
+     *
+     * @return a Configuration object with the correct service URL, writer and query parameter
+     *
+     * @throws ApplicationException thrown when the file could not be created or an error occured
+     *                              while parsing the command line
+     */
+    public Configuration parse(String... cmdArgs) throws ApplicationException {
+        try {
+            CommandLineParser cmdLineParser = new PosixParser();
+            CommandLine cmdLine = cmdLineParser.parse(options, cmdArgs);
 
-        validate(cmdLine);
+            validate(cmdLine);
 
-        // take the parameter to search for
-        String searchParam = cmdLine.getArgs()[0];
+            // take the parameter to search for
+            String searchParam = cmdLine.getArgs()[0];
 
-        // parse the service URL
-        String serviceUrl = null;
-        if (cmdLine.hasOption(OPTION_LOCALHOST)) {
-            serviceUrl = URL_LOCALHOST;
-        } else if (cmdLine.hasOption(OPTION_URL)) {
-            serviceUrl = cmdLine.getOptionValue(OPTION_URL);
-        } else {
-            serviceUrl = URL_REMOTE;
+            // parse the service URL
+            String serviceUrl = null;
+            if (cmdLine.hasOption(OPTION_LOCALHOST)) {
+                serviceUrl = URL_LOCALHOST;
+            } else if (cmdLine.hasOption(OPTION_URL)) {
+                serviceUrl = cmdLine.getOptionValue(OPTION_URL);
+            } else {
+                serviceUrl = URL_REMOTE;
+            }
+
+            // parse the output writer
+            Writer writer = null;
+            if (cmdLine.hasOption(OPTION_FILENAME)) {
+                writer = new FileWriter(cmdLine.getOptionValue(OPTION_FILENAME));
+            } else {
+                writer = new PrintWriter(System.out);
+            }
+
+            return new Configuration().withSearchParameter(searchParam).withServiceUrl(serviceUrl).withWriter(writer);
+
+        } catch (IOException e) {
+            throw new ApplicationException(ApplicationException.ErrorCode.INTERNAL_ERROR,
+                    "An error occured while creating the file.", e);
+        } catch (ParseException e) {
+            throw new ApplicationException(ApplicationException.ErrorCode.INTERNAL_ERROR,
+                    "An error occured while parsing the command line.", e);
         }
-
-        // parse the output writer
-        Writer writer = null;
-        if (cmdLine.hasOption(OPTION_FILENAME)) {
-            writer = new FileWriter(cmdLine.getOptionValue(OPTION_FILENAME));
-        } else {
-            writer = new PrintWriter(System.out);
-        }
-
-        return new Configuration().withSearchParameter(searchParam).withServiceUrl(serviceUrl).withWriter(writer);
     }
 
+    // checks that no invalid command arg combinations are used
     private void validate(CommandLine cmdLine) throws UnsupportedEncodingException, ApplicationException {
         if ((cmdLine.hasOption(OPTION_URL) && cmdLine.hasOption(OPTION_LOCALHOST))
                 || (cmdLine.getArgs() == null || cmdLine.getArgs().length == 0)) {
@@ -72,6 +96,7 @@ public class CommandLineOptionsParser {
                     "%s%s", OPTION_URL, OPTION_LOCALHOST, OPTION_FILENAME, exampleParam,
                     URL_REMOTE, URLEncoder.encode(exampleParam, "UTF-8"));
             formatter.printHelp(msg, options);
+
             throw new ApplicationException(ApplicationException.ErrorCode.WRONG_CMD_ARGUMENTS_ERROR,
                     "Invalid command line args", null);
         }
